@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event-Driven Todo Manager</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    #todoInput {
+      width: 300px;
+      padding: 8px;
+      font-size: 16px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    /* Green circle tick */
+    .tick {
+      width: 20px;
+      height: 20px;
+      border: 2px solid green;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: green;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Task text (no strikeout) */
+    .task-text {
+      flex: 1;
+    }
+
+    .completed-label {
+      color: green;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Event-Driven Dynamic Todo Manager</h2>
+
+  <input id="todoInput" placeholder="Add a task and press Enter">
+  <ul id="todoList"></ul>
+
+  <script>
+    const input = document.getElementById("todoInput");
+    const list = document.getElementById("todoList");
+
+    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+    function saveTodos() {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+
+    function renderTodos() {
+      list.innerHTML = "";
+
+      todos.forEach(todo => {
+        const li = document.createElement("li");
+        li.dataset.id = todo.id;
+
+        li.innerHTML = `
+          <div class="tick">${todo.completed ? "✓" : ""}</div>
+          <span class="task-text">${todo.text}</span>
+          ${todo.completed ? `<span class="completed-label">Completed</span>` : ""}
+          <button data-action="edit">Edit</button>
+          <button data-action="delete">Delete</button>
+        `;
+
+        list.appendChild(li);
+      });
+
+      saveTodos();
+    }
+
+    // Add task
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter" && input.value.trim() !== "") {
+        todos.push({
+          id: Date.now(),
+          text: input.value,
+          completed: false
+        });
+        input.value = "";
+        renderTodos();
+      }
+    });
+
+    // Event delegation
+    list.addEventListener("click", e => {
+      const li = e.target.closest("li");
+      if (!li) return;
+
+      const id = Number(li.dataset.id);
+      const todo = todos.find(t => t.id === id);
+
+      // Mark as completed
+      if (e.target.classList.contains("tick")) {
+        todo.completed = !todo.completed;
+      }
+
+      // Edit task
+      if (e.target.dataset.action === "edit") {
+        const newText = prompt("Edit task:", todo.text);
+        if (newText && newText.trim() !== "") {
+          todo.text = newText;
+        }
+      }
+
+      // Delete task
+      if (e.target.dataset.action === "delete") {
+        todos = todos.filter(t => t.id !== id);
+      }
+
+      renderTodos();
+    });
+
+    renderTodos();
+  </script>
+
+</body>
+</html>
